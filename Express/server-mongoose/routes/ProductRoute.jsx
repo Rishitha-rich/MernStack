@@ -1,66 +1,73 @@
 const express = require('express')
 const router = express.Router();
 const Products = require('../models/ProductsModel')
+const validate = require('../config/auth')
 
-
-router.get('/all',async(req,res)=>{
+router.get('/count', async (req, res) => {
     try {
-        const products= await Products.find()
-        res.status(200).json(products)
+        const count = await Products.countDocuments()
+        return res.status(200).json({ count: count })
     } catch (error) {
-        res.status(500).json({message:error.message})        
+        return res.status(500).json({ message: error.message })
     }
 })
-router.post('/add', async(req,res)=>{
-    try{
-const ProductData=new products(req.body)
-const{title,img,price}=ProductData
-if(!title || !img || !price){
-    res.send(400).json({message:"All fields required"})
-}
-const storedata=await ProductData.save()
-res.status(200).json(storedata)
+// Method : GET  || API : localhost:3000/products/all
+router.get('/all', async (req, res) => {
+    try {
+        const products = await Products.find()
+        return res.status(200).json(products)
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
     }
- catch(error){
- res.status(500).json({message:error.message})        
-}
-})
-router.put('/edit/:id',async(req,res)=>{
-    try{
-        const id=req.params.id
-        const existingproduct=await Products.findOne({_id:id})
-        if(!existingproduct){
-        res.status(404).json({message:"product not found!"})
-    }
-    const updateproduct=await Products.findOneAndUpdate(id,req.body,{new:true})
-           res.status(200).json(updateproduct)
-
-        }
-        catch(error){
-            res.status(500).json({message:error.message})
-        }
-
-    })
-router.delete('/edit/:id',async(req,res)=>{
-    try{
-        const id=req.params.id
-        const existingproduct=await Products.findOne({_id:id})
-        if(!existingproduct){
-        res.status(404).json({message:"product not found!"})
-    }
-           await Products.findOneAndDelete(id)
-           res.status(200).json({message:"product not found!"})
-
-        }
-        catch(error)
-        {
-            res.status(500).json({message:error.message})
-        }
-    
 })
 
+// Method : POST  || API : localhost:3000/products/add
+router.post('/add', async (req, res) => {
+    try {
+        const newproduct = new Products(req.body)
+        const { title, img, price } = newproduct
+        if (!title || !img || !price) {
+            return res.status(400).json({ message: "All fields required" })
+        }
+        await newproduct.save()
+        return res.status(200).json(newproduct)
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+})
 
-module.export = router
+// Method : PUT  || API : localhost:3000/products/edit/_id
+router.put('/edit/:id', async (req, res) => {
+    try {
+        const id = req.params.id
+        const existingproduct = await Products.findOne({ _id: id })
+        if (!existingproduct) {
+            return res.status(404).json({ message: "Product not found" })
+        }
+        const updatedproduct = await Products.findByIdAndUpdate(id, req.body, { new: true })
+        res.status(200).json(updatedproduct)
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+})
+
+// Method : DELETE  || API : localhost:3000/products/delete/_id
+router.delete('/delete/:id', async (req, res) => {
+    try {
+        const id = req.params.id
+        const existingproduct = await Products.findOne({ _id: id })
+        if (!existingproduct) {
+            res.status(404).json({ message: "Product not found" })
+        }
+        await Products.findByIdAndDelete(id)
+        return res.status(200).json({ message: "Product Deleted" })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+})
+
+
+module.exports = router
 
 // 1.GET
 // 2.POST
@@ -71,6 +78,7 @@ module.export = router
 // 2.CREATE
 // 3.UPDATE
 // 4.DELETE
+
 
 // 200 -> OK
 // 404 -> NOT FOUND
